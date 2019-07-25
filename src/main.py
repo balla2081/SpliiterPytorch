@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument('--input', nargs='?', default='graph/karate.elist',
                         help='Input graph path')
     
-     parser.add_argument("--persona-graph", nargs = "?", default = "graph/karate-persona.elist",
+    parser.add_argument("--persona-graph", nargs = "?", default = "graph/karate-persona.elist",
                         help = "Persona network path.")
     
     parser.add_argument("--persona-mapping", nargs = "?", default = "mapping/karate.json",
