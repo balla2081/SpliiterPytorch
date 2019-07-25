@@ -11,19 +11,19 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 class Splitter(torch.nn.Module):
-	"""
-	An implementation of "Splitter: Learning Node Representations that Capture Multiple Social Contexts" (WWW 2019).
-	Paper: http://epasto.org/papers/www2019splitter.pdf
-	"""
-	def __init__(self, dimensions, lambd, base_node_count, node_count, device):
-		"""
-		Splitter set up.
-		:param dimensions: Dimension of embedding vectors
+    """
+    An implementation of "Splitter: Learning Node Representations that Capture Multiple Social Contexts" (WWW 2019).
+    Paper: http://epasto.org/papers/www2019splitter.pdf
+    """
+    def __init__(self, dimensions, lambd, base_node_count, node_count, device):
+        """
+        Splitter set up.
+        :param dimensions: Dimension of embedding vectors
         :param lambd: Parameter that determine how much perosnas spread from originl embeddding
-		:param base_node_count: Number of nodes in the source graph.
-		:param node_count: Number of nodes in the persona graph.
-		:param device: Deveice which pytorch use 
-		"""
+        :param base_node_count: Number of nodes in the source graph.
+        :param node_count: Number of nodes in the persona graph.
+        :param device: Deveice which pytorch use 
+        """
         super(Splitter, self).__init__()
 
         self.dimensions = dimensions
@@ -33,7 +33,7 @@ class Splitter(torch.nn.Module):
         self.device = device
 
     def create_weights(self):
-		"""
+        """
         Creating weights for embedding.
         """
         self.base_node_embedding = torch.nn.Embedding(self.base_node_count, self.dimensions, padding_idx = 0)
@@ -55,7 +55,7 @@ class Splitter(torch.nn.Module):
         scores = torch.sum(node_f*feature_f, dim=1).to(self.device)
         scores = torch.sigmoid(scores).to(self.device)
         main_loss = targets*torch.log(scores) + (1-targets)*torch.log(1-scores).to(self.device)
-		main_loss = -torch.mean(main_loss).to(self.device)
+        main_loss = -torch.mean(main_loss).to(self.device)
         
         return main_loss
 
@@ -70,19 +70,19 @@ class Splitter(torch.nn.Module):
 
     
 
-	def forward(self, node_f, feature_f, targets, source_f, original_f): 
-		main_loss = self.calculate_main_loss(node_f, feature_f, targets)
-		regularization_loss = self.calculate_regularization(source_f, original_f)
-		loss = main_loss + self.lambd * regularization_loss
+    def forward(self, node_f, feature_f, targets, source_f, original_f): 
+        main_loss = self.calculate_main_loss(node_f, feature_f, targets)
+        regularization_loss = self.calculate_regularization(source_f, original_f)
+        loss = main_loss + self.lambd * regularization_loss
         
-		return loss.to(self.device)
+        return loss.to(self.device)
          
 class SplitterTrainer(object):
     """
     Class for training a Splitter.
     """
     def __init__(self, graph, 
-						directed=False,
+                        directed=False,
                         num_walks=10,
                         walk_length=80,
                         p=1,
@@ -125,7 +125,7 @@ class SplitterTrainer(object):
         Fitting Node2Vec base model.
         """
         self.base_walker = Node2Vec(self.graph,
-											directed=self.directed,
+                                            directed=self.directed,
                                             num_walks=self.num_walks,
                                             walk_length=self.walk_length,
                                             p=self.p,
@@ -146,8 +146,8 @@ class SplitterTrainer(object):
         """
         self.egonet_splitter = EgoNetSplitter(self.graph)
         self.persona_walker = Node2Vec(self.egonet_splitter.persona_graph,
-											directed=self.directed,
-											num_walks=self.num_walks,
+                                            directed=self.directed,
+                                            num_walks=self.num_walks,
                                             walk_length=self.walk_length,
                                             p=self.p,
                                             q=self.q)
@@ -195,9 +195,9 @@ class SplitterTrainer(object):
         self.targets += [1.0] + [0.0]*self.negative_samples     
 
     def transfer_batch(self):
-		"""
+        """
         Transfering the batch to GPU.
-		"""
+        """
         self.node_f = self.model.node_embedding(torch.LongTensor(self.sources)).to(self.device)
         self.feature_f = self.model.node_embedding(torch.LongTensor(self.contexts)).to(self.device)
         self.targets = torch.FloatTensor(self.targets).to(self.device)
@@ -274,7 +274,7 @@ class SplitterTrainer(object):
                 
     def save_persona_graph_mapping(self, file_name):
         """
-		Saving the persona map.
+        Saving the persona map.
         """
         with open(file_name, "w") as f:
             json.dump(self.egonet_splitter.personality_map, f)
