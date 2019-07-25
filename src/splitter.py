@@ -82,19 +82,18 @@ class SplitterTrainer(object):
         Class for training a Splitter.
         """
         def __init__(self, graph, 
-                                                directed=False,
-                                                num_walks=10,
-                                                walk_length=80,
-                                                p=1,
-                                                q=1,
-                                                dimensions=128,
-                                                window_size=10,
-                                                base_iter=1,
-                                                learning_rate=0.01,
-                                                lambd = 0.1,
-                                                negative_samples=5,
-                                                workers=1,
-        ):
+                                directed=False,
+                                num_walks=10,
+                                walk_length=80,
+                                p=1,
+                                q=1,
+                                dimensions=128,
+                                window_size=10,
+                                base_iter=1,
+                                learning_rate=0.01,
+                                lambd = 0.1,
+                                negative_samples=5,
+                                workers=1):
                 """
                 :param graph: NetworkX graph object.
                 :param args: Arguments object.
@@ -127,15 +126,15 @@ class SplitterTrainer(object):
                 Fitting Node2Vec base model.
                 """
                 self.base_walker = Node2Vec(self.graph,
-                                                                                directed=self.directed,
-                                                                                num_walks=self.num_walks,
-                                                                                walk_length=self.walk_length,
-                                                                                p=self.p,
-                                                                                q=self.q,
-                                                                                dimensions=self.dimensions,
-                                                                                window_size=self.window_size,
-                                                                                base_iter=self.base_iter,
-                                                                                workers=self.workers)
+                                                directed=self.directed,
+                                                num_walks=self.num_walks,
+                                                walk_length=self.walk_length,
+                                                p=self.p,
+                                                q=self.q,
+                                                dimensions=self.dimensions,
+                                                window_size=self.window_size,
+                                                base_iter=self.base_iter,
+                                                orkers=self.workers)
                 logging.info("Doing base random walks.")
                 self.base_walker.simulate_walks()
                 logging.info("Learning the base model.")
