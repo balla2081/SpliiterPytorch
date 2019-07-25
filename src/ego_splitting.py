@@ -67,9 +67,6 @@ class EgoNetSplitter(object):
             G[edge[0]][edge[1]]['weight'] = 1        
         self.persona_graph = G
         
-    def save_persona_graph(self):
-        nx.write_edgeplist(self.persona_graph, args.persona_graph)
-        logging.info("Persona graph saved")
         
         
 

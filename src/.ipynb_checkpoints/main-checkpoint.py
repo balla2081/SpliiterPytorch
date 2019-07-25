@@ -98,23 +98,23 @@ def parse_args():
 
 
 def main():
-		"""
-		Parsing command line parameters.
-		Reading data, embedding base graph, creating persona graph and learning a splitter.
-		Saving the persona mapping and the embedding.
-		"""
-		args = parse_args()
-		torch.manual_seed(args.seed)
-		tab_printer(args)
+    """
+    Parsing command line parameters.
+    Reading data, embedding base graph, creating persona graph and learning a splitter.
+    Saving the persona mapping and the embedding.
+    """
+    args = parse_args()
+    torch.manual_seed(args.seed)
+    tab_printer(args)
 
-		graph = read_graph(args.input, args.weighted, args.directed)
-		splitter_trainer = SplitterTrainer(graph,		 
+    graph = read_graph(args.input, args.weighted, args.directed)
+		splitter_trainer = SplitterTrainer(grah,		 
 																				directed=args.directed,
 																				num_walks=args.num_walks,
 																				p=args.p,
 																				q=args.q,
 																				dimensions=args.dimensions,
-																				window_size=args.window_size,
+																				window_size=ars.window_size,
 																				base_iter=args.base_iter,
 																				learning_rate=args.learning_rate,
 																				lambd=args.lambd,
