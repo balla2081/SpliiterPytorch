@@ -1,5 +1,8 @@
 import networkx as nx
 from tqdm import tqdm
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 class EgoNetSplitter(object):
     """
@@ -42,7 +45,7 @@ class EgoNetSplitter(object):
         self.components = {}
         self.personalities = {}
         self.index = 0
-        print("\nCreating egonets.\n")
+        logging.info("Creating egonets.")
         for node in tqdm(self.graph.nodes()):
             self.create_egonet(node)
 
@@ -56,6 +59,17 @@ class EgoNetSplitter(object):
         """
         Create a persona graph using the egonet components.
         """
-        print("\nCreating the persona graph.\n")
+        logging.info("Creating the persona graph.")
         self.persona_graph_edges = [(self.components[edge[0]][edge[1]], self.components[edge[1]][edge[0]]) for edge in tqdm(self.graph.edges())]
-        self.persona_graph = nx.from_edgelist(self.persona_graph_edges)
+        
+        G = nx.from_edgelist(self.persona_graph_edges)
+        for edge in G.edges():
+            G[edge[0]][edge[1]]['weight'] = 1        
+        self.persona_graph = G
+        
+    def save_persona_graph(self):
+        nx.write_edgeplist(self.persona_graph, args.persona_graph)
+        logging.info("Persona graph saved")
+        
+        
+
