@@ -151,9 +151,9 @@ class SplitterTrainer(object):
                                             walk_length=self.walk_length,
                                             p=self.p,
                                             q=self.q)
-            logging.info("Doing persona random walks.")
-            self.persona_walker.simulate_walks()
-            self.create_negative_sample_pool()
+        logging.info("Doing persona random walks.")
+        self.persona_walker.simulate_walks()
+        self.create_negative_sample_pool()
 
     def setup_model(self):
         """
