@@ -12,24 +12,24 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 class Splitter(torch.nn.Module):
 	"""
-    An implementation of "Splitter: Learning Node Representations that Capture Multiple Social Contexts" (WWW 2019).
-    Paper: http://epasto.org/papers/www2019splitter.pdf
+	An implementation of "Splitter: Learning Node Representations that Capture Multiple Social Contexts" (WWW 2019).
+	Paper: http://epasto.org/papers/www2019splitter.pdf
 	"""
 	def __init__(self, dimensions, lambd, base_node_count, node_count, device):
 		"""
-        Splitter set up.
+		Splitter set up.
 		:param dimensions: Dimension of embedding vectors
         :param lambd: Parameter that determine how much perosnas spread from originl embeddding
 		:param base_node_count: Number of nodes in the source graph.
 		:param node_count: Number of nodes in the persona graph.
 		:param device: Deveice which pytorch use 
-        """
+		"""
         super(Splitter, self).__init__()
 
         self.dimensions = dimensions
         self.lambd = lambd
         self.base_node_count = base_node_count
-         self.node_count = node_count
+        self.node_count = node_count
         self.device = device
 
     def create_weights(self):
@@ -71,11 +71,11 @@ class Splitter(torch.nn.Module):
     
 
 	def forward(self, node_f, feature_f, targets, source_f, original_f): 
-			main_loss = self.calculate_main_loss(node_f, feature_f, targets)
-            regularization_loss = self.calculate_regularization(source_f, original_f)
-            loss = main_loss + self.lambd * regularization_loss
+		main_loss = self.calculate_main_loss(node_f, feature_f, targets)
+		regularization_loss = self.calculate_regularization(source_f, original_f)
+		loss = main_loss + self.lambd * regularization_loss
         
-        return loss.to(self.device)
+		return loss.to(self.device)
          
 class SplitterTrainer(object):
     """
