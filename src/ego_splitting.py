@@ -14,7 +14,6 @@ class EgoNetSplitter(object):
     def __init__(self, graph):
         """
         :param graph: Networkx object.
-        :param resolution: Resolution parameter of Python Louvain.
         """
         self.graph = graph
         self.create_egonets()
