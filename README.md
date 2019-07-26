@@ -1,6 +1,8 @@
 # SplitterPytorch
 A PyTorch implementation of "Splitter: Learning Node Representations that Capture Multiple Social Contexts" (WWW 2019).
-This code is based on https://github.com/benedekrozemberczki/Splitter for the splitter codes, and node2vec https://github.com/eliorc/node2vec
+This code is based on https://github.com/benedekrozemberczki/Splitter for the splitter codes, 
+
+and node2vec https://github.com/eliorc/node2vec
 
 I reorganize the codes and fix some buts for my research. So,this codes works pretty well on emperical dataset, and very easy to use.
 
