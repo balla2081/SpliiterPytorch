@@ -3,7 +3,7 @@ import torch
 import networkx as nx
 import numpy as np
 import pandas as pd
-from tqdm import tqdm, trange
+from tqdm import trange
 from walkers import Node2Vec
 from ego_splitting import EgoNetSplitter
 import logging
@@ -19,10 +19,10 @@ class Splitter(torch.nn.Module):
         """
         Splitter set up.
         :param dimensions: Dimension of embedding vectors
-        :param lambd: Parameter that determine how much perosnas spread from originl embeddding
+        :param lambd: Parameter that determine how much personas spread from original embedding
         :param base_node_count: Number of nodes in the source graph.
         :param node_count: Number of nodes in the persona graph.
-        :param device: Deveice which pytorch use 
+        :param device: Device which torch use
         """
         super(Splitter, self).__init__()
 
@@ -44,12 +44,20 @@ class Splitter(torch.nn.Module):
         Using the base embedding and the persona mapping for initializing the embedding matrices.
         :param base_node_embedding: Node embedding of the source graph.
         :param mapping: Mapping of personas to nodes.
+        :param str2idx: Mapping string of original network to index in original network
         """
         persona_embedding = np.array([base_node_embedding[str2idx[original_node]] for node, original_node in mapping.items()])
         self.node_embedding.weight.data = torch.nn.Parameter(torch.Tensor(persona_embedding))
         self.base_node_embedding.weight.data = torch.nn.Parameter(torch.Tensor(base_node_embedding), requires_grad=False)
 
     def calculate_main_loss(self, node_f, feature_f, targets):
+        """
+        Calculating the main loss which is used to learning based on persona random walkers
+        It will be act likes centrifugal force from the base embedding
+        :param node_f: Embedding vectors of source nodes
+        :param feature_f: Embedding vectors of target nodes to predict
+        :param targets: Boolean vector whether negative samples or not
+        """
         node_f = torch.nn.functional.normalize(node_f, p=2, dim=1).to(self.device)
         feature_f = torch.nn.functional.normalize(feature_f, p=2, dim=1).to(self.device)
         scores = torch.sum(node_f*feature_f, dim=1).to(self.device)
@@ -60,6 +68,12 @@ class Splitter(torch.nn.Module):
         return main_loss
 
     def calculate_regularization(self, source_f, original_f):
+        """
+         Calculating the main loss which is used to learning based on persona random walkers
+         It will be act likes centripetal force from the base embedding
+         :param source_f: Embedding vectors of source nodes
+         :param original_f: Embedding vectors of base embedding of source nodes
+         """
         source_f = torch.nn.functional.normalize(source_f, p=2, dim=1).to(self.device)
         original_f = torch.nn.functional.normalize(original_f, p=2, dim=1).to(self.device)
         scores = torch.sum(source_f*original_f,dim=1).to(self.device)
@@ -68,14 +82,23 @@ class Splitter(torch.nn.Module):
         
         return regularization_loss
 
-    
+    def forward(self, node_f, feature_f, targets, source_f, original_f):
+        """
+        1.main loss part
+        :param node_f: Embedding vectors of source nodes
+        :param feature_f: Embedding vectors of target nodes to predict
+        :param targets: Boolean vector whether negative samples or not
 
-    def forward(self, node_f, feature_f, targets, source_f, original_f): 
+        2.regularization part
+        :param source_f: Embedding vectors of source nodes
+        :param original_f: Embedding vectors of base embedding of source nodes
+        """
         main_loss = self.calculate_main_loss(node_f, feature_f, targets)
         regularization_loss = self.calculate_regularization(source_f, original_f)
         loss = main_loss + self.lambd * regularization_loss
         
         return loss.to(self.device)
+
          
 class SplitterTrainer(object):
     """
@@ -96,7 +119,17 @@ class SplitterTrainer(object):
                         workers=1):
         """
         :param graph: NetworkX graph object.
-        :param args: Arguments object.
+        :param directed: Directed network(True) or undirected network(False)
+        :param num_walks: Number of random walker per node
+        :param walk_length: Length(number of nodes) of random walker
+        :param p: the likelihood of immediately revisiting a node in the walk
+        :param q: search to differentiate between “inward” and “outward” nodes in the walk
+        :param dimensions: Dimension of embedding vectors
+        :param window_size: Maximum distance between the current and predicted node in the network
+        :param base_iter: Number of iterations (epochs) over the walks
+        :param learning_rate: Learning rate of Splitter
+        :param negative_samples: Number of negative sample in splitter
+        :param workers: Number of CPU cores that will be used in training
         """
         self.graph = graph
         self.directed = directed
@@ -117,8 +150,11 @@ class SplitterTrainer(object):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
 
     def create_negative_sample_pool(self):
+        """
+        Creating the node pools to sample negative samples based on node degree distribution
+        """
         self.downsampled_degrees = {node: int(1+self.egonet_splitter.persona_graph.degree(node)**0.75) for node in self.egonet_splitter.persona_graph.nodes()}
-        self.negative_samples_pool = [k for k,v in self.downsampled_degrees.items() for i in range(v)]
+        self.negative_samples_pool = [k for k, v in self.downsampled_degrees.items() for i in range(v)]
                   
     def base_model_fit(self):
         """
@@ -142,7 +178,7 @@ class SplitterTrainer(object):
 
     def create_split(self):
         """
-        Creating an EgoNetSplitter.
+        Creats the persona networks and generates persona random walker
         """
         self.egonet_splitter = EgoNetSplitter(self.graph)
         self.persona_walker = Node2Vec(self.egonet_splitter.persona_graph,
@@ -157,7 +193,7 @@ class SplitterTrainer(object):
 
     def setup_model(self):
         """
-        Creating a model and doing a transfer to GPU.
+        Creating a model and initialize the embeddings
         """
         base_node_count = self.graph.number_of_nodes()
         persona_node_count = self.egonet_splitter.persona_graph.number_of_nodes()
@@ -255,14 +291,16 @@ class SplitterTrainer(object):
                 self.steps = 0
                 self.losses = 0
 
-    # save functions 
-
+    # save functions...
     def save_base_embedding(self, file_name):
+        """
+        Saving the base node embedding.
+        """
         self.base_walker.save_embedding(file_name)      
         
     def save_persona_embedding(self, file_name):
         """
-        Saving the node embedding.
+        Saving the persona node embedding.
         """
         logging.info("Saving the model.")
         nodes = [node for node in self.egonet_splitter.persona_graph.nodes()]
@@ -274,11 +312,14 @@ class SplitterTrainer(object):
                 
     def save_persona_graph_mapping(self, file_name):
         """
-        Saving the persona map.
+        Saving the persona map which is connect original node and personas of node.
         """
         with open(file_name, "w") as f:
             json.dump(self.egonet_splitter.personality_map, f)
 
     def save_persona_graph(self, file_name):
+        """
+        Saving the persona graph.
+        """
         nx.write_edgelist(self.egonet_splitter.persona_graph, file_name)
 

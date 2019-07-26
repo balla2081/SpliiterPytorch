@@ -6,7 +6,7 @@ from utils import tab_printer, read_graph
 
 def parse_args():
     ''''
-    Parses the node2vec arguments.
+    Parses the Splitter arguments.
     '''
     parser = argparse.ArgumentParser(description="Run splitter with node2vec")
     
@@ -41,8 +41,8 @@ def parse_args():
     parser.add_argument('--window-size', type=int, default=10,
                         help='Context size for optimization. Default is 10.')
 
-    parser.add_argument('--base_iter', default=1, type=int,
-                      help='Number of epochs in base embedding')
+    parser.add_argument('--base_iter', type=int, default=1,
+                        help='Number of epochs in base embedding')
     
     parser.add_argument('--p', type=float, default=1,
                         help='Return hyperparameter for random-walker. Default is 1.')
@@ -55,25 +55,23 @@ def parse_args():
     parser.add_argument("--learning-rate",
                         type = float,
                         default = 0.01,
-                    help = "Learning rate. Default is 0.01.")
+                        help = "Learning rate. Default is 0.01.")
 
     parser.add_argument("--lambd",
                         type = float,
                         default = 0.1,
-                    help = "Regularization parameter. Default is 0.1.")
+                        help = "Regularization parameter. Default is 0.1.")
     
     parser.add_argument("--negative-samples",
                         type = int,
                         default = 5,
-                    help = "Negative sample number. Default is 5.")
-    
-    
+                        help = "Negative sample number. Default is 5.")
     
     ## computation configuration
     parser.add_argument("--seed",
                         type = int,
                         default = 42,
-                    help = "Random seed for PyTorch. Default is 42.")
+                        help = "Random seed for PyTorch. Default is 42.")
     
     parser.add_argument('--workers', type=int, default=8,
                         help='Number of parallel workers. Default is 8.')

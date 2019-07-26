@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import networkx as nx
 from tqdm import tqdm
 from gensim.models import Word2Vec
 import logging
@@ -12,7 +11,28 @@ class Node2Vec(object):
     """
     Node2Vec node embedding object
     """
-    def __init__(self, G, directed=False, num_walks=10, walk_length=80,  p=1, q=1, dimensions=128, window_size=10, base_iter=1, workers=1):
+    def __init__(self, G,
+                 directed=False,
+                 num_walks=10,
+                 walk_length=80,
+                 p=1,
+                 q=1,
+                 dimensions=128,
+                 window_size=10,
+                 base_iter=1,
+                 workers=1):
+        """
+        :param G: NetworkX graph object.
+        :param directed: Directed network(True) or undirected network(False)
+        :param num_walks: Number of random walker per node
+        :param walk_length: Length(number of nodes) of random walker
+        :param p: the likelihood of immediately revisiting a node in the walk
+        :param q: search to differentiate between “inward” and “outward” nodes in the walk
+        :param dimensions: Dimension of embedding vectors
+        :param window_size: Maximum distance between the current and predicted node in the network
+        :param base_iter: Number of iterations (epochs) over the walks
+        :param workers: Number of CPU cores that will be used in training
+        """
         self.G = G
         self.directed = directed
                 
@@ -32,8 +52,7 @@ class Node2Vec(object):
       
         self.walks = []
         self.preprocess_transition_probs()
-        
-    
+
     def preprocess_transition_probs(self):
         '''
         Preprocessing of transition probabilities for guiding the random walks.
