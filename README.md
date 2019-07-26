@@ -1,22 +1,14 @@
 # SplitterPytorch
 A PyTorch implementation of "Splitter: Learning Node Representations that Capture Multiple Social Contexts" (WWW 2019).
-This code is based on https://github.com/benedekrozemberczki/Splitter for the splitter codes, and node2vec https://github.com/eliorc/node2vec
-
-I reorganize the codes and fix some buts for my research. So,this codes works pretty well on emperical dataset, and very easy to use.
-
-
-### Abstract
-
-<p align="justify">
-Recent interest in graph embedding methods has focused on learning a single representation for each node in the graph. But can nodes really be best described by a single vector representation? In this work, we propose a method for learning multiple representations of the nodes in a graph (e.g., the users of a social network). Based on a principled decomposition of the ego-network, each representation encodes the role of the node in a different local community in which the nodes participate. These representations allow for improved reconstruction of the nuanced relationships that occur in the graph a phenomenon that we illustrate through state-of-the-art results on link prediction tasks on a variety of graphs, reducing the error by up to 90%. In addition, we show that these embeddings allow for effective visual analysis of the learned community structure.</p>
-
-This repository provides a PyTorch implementation of Splitter as described in the paper:
 
 > Splitter: Learning Node Representations that Capture Multiple Social Contexts.
 > Alessandro Epasto and Bryan Perozzi.
 > WWW, 2019.
 > [[Paper]](http://epasto.org/papers/www2019splitter.pdf)
 
+This code is based on https://github.com/benedekrozemberczki/Splitter for the splitter codes, and node2vec https://github.com/eliorc/node2vec
+
+I reorganize the codes and fix some buts for my research. So,this codes works pretty well on emperical dataset, and very easy to use.
 
 The original Tensorflow implementation is available [[here]](https://github.com/google-research/google-research/tree/master/graph_embedding/persona). But there is only codes for generating persona, not embedding codes...
 
