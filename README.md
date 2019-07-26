@@ -1,9 +1,7 @@
-Splitter ![GitHub stars](https://img.shields.io/github/stars/benedekrozemberczki/Splitter.svg?style=plastic) ![GitHub forks](https://img.shields.io/github/forks/benedekrozemberczki/Splitter.svg?color=blue&style=plastic) ![License](https://img.shields.io/github/license/benedekrozemberczki/Splitter.svg?color=blue&style=plastic)
-============================================
 A PyTorch implementation of "Splitter: Learning Node Representations that Capture Multiple Social Contexts" (WWW 2019).
-<p align="center">
-  <img width="800" src="splitter.jpg">
-</p>
+This code is based on https://github.com/benedekrozemberczki/Splitter for the splitter codes, and node2vec https://github.com/eliorc/node2vec
+This codes works pretty well on emperical dataset, and very easy to use.
+
 
 ### Abstract
 
@@ -18,7 +16,7 @@ This repository provides a PyTorch implementation of Splitter as described in th
 > [[Paper]](http://epasto.org/papers/www2019splitter.pdf)
 
 
-The original Tensorflow implementation is available [[here]](https://github.com/google-research/google-research/tree/master/graph_embedding/persona).
+The original Tensorflow implementation is available [[here]](https://github.com/google-research/google-research/tree/master/graph_embedding/persona). But there is only codes for generating persona, not embedding codes...
 
 ### Requirements
 The codebase is implemented in Python 3.5.2. package versions used for development are just below.
