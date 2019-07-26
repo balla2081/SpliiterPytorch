@@ -6,7 +6,7 @@ A PyTorch implementation of "Splitter: Learning Node Representations that Captur
 > WWW, 2019.
 > [[Paper]](http://epasto.org/papers/www2019splitter.pdf)
 
-This code is based on https://github.com/benedekrozemberczki/Splitter for the splitter codes, and node2vec https://github.com/eliorc/node2vec. I reorganize the codes and fix some buts for my research. So,this codes works pretty well on emperical dataset, and very easy to use. The original Tensorflow implementation is available [[here]](https://github.com/google-research/google-research/tree/master/graph_embedding/persona). But there is only codes for generating persona, not embedding codes...
+This code is based on https://github.com/benedekrozemberczki/Splitter for the splitter codes, and node2vec https://github.com/eliorc/node2vec. I reorganize the codes and fix some bugs for my research. So,this codes works pretty well on emperical dataset, and very easy to use. The original Tensorflow implementation is available [[here]](https://github.com/google-research/google-research/tree/master/graph_embedding/persona). But there is only codes for generating persona, not embedding codes...
 
 ### Requirements
 The codebase is implemented in Python 3.5.2. package versions used for development are just below.
