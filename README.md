@@ -22,9 +22,13 @@ torch             0.4.1
 gensim            3.6.0
 ```
 ### Datasets
-The code takes the **edge list** of the graph in a csv file. You can easily make the edgelist file with networkx function [[nx.write_edgelist]](https://networkx.github.io/documentation/networkx1.10/reference/generated/networkx.readwrite.edgelist.write_edgelist.html)
+The code takes the **edge list** of the graph in a csv file. You can easily make the edgelist file with networkx function [nx.write_edgelist](https://networkx.github.io/documentation/networkx1.10/reference/generated/networkx.readwrite.edgelist.write_edgelist.html
 
 ### Outputs
+There are 4 outputs on Splitter
+1. Persona graph
+
+
 
 The embeddings are saved in the `input/` directory. Each embedding has a header and a column with the node IDs. Finally, the node embedding is sorted by the node ID column.
 
