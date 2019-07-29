@@ -22,7 +22,7 @@ torch             0.4.1
 gensim            3.6.0
 ```
 ### Datasets
-The code takes the **edge list** of the graph in a csv file. Every row indicates an edge between two nodes separated by a comma. The first row is a header. Nodes should be indexed starting with 0. A sample graph for `Cora` is included in the  `input/` directory.
+The code takes the **edge list** of the graph in a csv file. You can easily make the edgelist file with networkx function [[nx.write_edgelist]](https://networkx.github.io/documentation/networkx1.10/reference/generated/networkx.readwrite.edgelist.write_edgelist.html)
 
 ### Outputs
 
