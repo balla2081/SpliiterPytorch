@@ -3,10 +3,12 @@ import torch
 import networkx as nx
 import numpy as np
 import pandas as pd
-from tqdm import trange
+from tqdm import tqdm
 from walkers import Node2Vec
+from torch.utils.data import DataLoader, Dataset
 from ego_splitting import EgoNetSplitter
 import logging
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
@@ -47,8 +49,8 @@ class Splitter(torch.nn.Module):
         :param str2idx: Mapping string of original network to index in original network
         """
         persona_embedding = np.array([base_node_embedding[str2idx[original_node]] for node, original_node in mapping.items()])
-        self.node_embedding.weight.data = torch.nn.Parameter(torch.Tensor(persona_embedding))
-        self.base_node_embedding.weight.data = torch.nn.Parameter(torch.Tensor(base_node_embedding), requires_grad=False)
+        self.node_embedding.weight.data = torch.nn.Parameter(torch.Tensor(persona_embedding)).to(self.device)
+        self.base_node_embedding.weight.data = torch.nn.Parameter(torch.Tensor(base_node_embedding), requires_grad=False).to(self.device)
 
     def calculate_main_loss(self, node_f, feature_f, targets):
         """
@@ -58,12 +60,12 @@ class Splitter(torch.nn.Module):
         :param feature_f: Embedding vectors of target nodes to predict
         :param targets: Boolean vector whether negative samples or not
         """
-        node_f = torch.nn.functional.normalize(node_f, p=2, dim=1).to(self.device)
-        feature_f = torch.nn.functional.normalize(feature_f, p=2, dim=1).to(self.device)
-        scores = torch.sum(node_f*feature_f, dim=1).to(self.device)
-        scores = torch.sigmoid(scores).to(self.device)
-        main_loss = targets*torch.log(scores) + (1-targets)*torch.log(1-scores).to(self.device)
-        main_loss = -torch.mean(main_loss).to(self.device)
+        node_f = torch.nn.functional.normalize(node_f, p=2, dim=1)
+        feature_f = torch.nn.functional.normalize(feature_f, p=2, dim=1)
+        scores = torch.sum(node_f*feature_f, dim=1)
+        scores = torch.sigmoid(scores)
+        main_loss = targets*torch.log(scores) + (1-targets)*torch.log(1-scores)
+        main_loss = -torch.mean(main_loss)
         
         return main_loss
 
@@ -74,11 +76,11 @@ class Splitter(torch.nn.Module):
          :param source_f: Embedding vectors of source nodes
          :param original_f: Embedding vectors of base embedding of source nodes
          """
-        source_f = torch.nn.functional.normalize(source_f, p=2, dim=1).to(self.device)
-        original_f = torch.nn.functional.normalize(original_f, p=2, dim=1).to(self.device)
-        scores = torch.sum(source_f*original_f,dim=1).to(self.device)
-        scores = torch.sigmoid(scores).to(self.device)
-        regularization_loss = -torch.mean(torch.log(scores)).to(self.device)
+        source_f = torch.nn.functional.normalize(source_f, p=2, dim=1)
+        original_f = torch.nn.functional.normalize(original_f, p=2, dim=1)
+        scores = torch.sum(source_f*original_f,dim=1)
+        scores = torch.sigmoid(scores)
+        regularization_loss = -torch.mean(torch.log(scores))
         
         return regularization_loss
 
@@ -97,9 +99,9 @@ class Splitter(torch.nn.Module):
         regularization_loss = self.calculate_regularization(source_f, original_f)
         loss = main_loss + self.lambd * regularization_loss
         
-        return loss.to(self.device)
+        return loss
 
-         
+
 class SplitterTrainer(object):
     """
     Class for training a Splitter.
@@ -116,6 +118,7 @@ class SplitterTrainer(object):
                         learning_rate=0.01,
                         lambd = 0.1,
                         negative_samples=5,
+						size_of_batch=1000,
                         workers=1):
         """
         :param graph: NetworkX graph object.
@@ -211,34 +214,29 @@ class SplitterTrainer(object):
         self.contexts = []
         self.targets = []       
 
-    def sample_negative_nodes(self):
-        """
-        Sampling noise nodes for context.
-        """
-        negative_nodes = np.random.choice(self.negative_samples_pool, self.negative_samples)
-        return list(negative_nodes)
-
-    def create_batch(self, source_node, context_node):
-        """
-        Augmenting a batch of data.
-        :param source_node: A source node.
-        :param context_node: A target to predict.
-        """
-        self.pure_sources += [source_node]
-        self.personas += [self.base_walker.str2idx[self.egonet_splitter.personality_map[source_node]]]
-        self.sources  += [source_node]*(self.negative_samples + 1)
-        self.contexts +=[context_node] + self.sample_negative_nodes()
-        self.targets += [1.0] + [0.0]*self.negative_samples     
+   
+    def create_batch_from_path(self, walk):
+        source_nodes = [walk[i] for i in range(self.walk_length-self.window_size) for j in range(1,self.window_size+1)]
+        context_nodes = [walk[i + j] for i in range(self.walk_length-self.window_size) for j in range(1,self.window_size+1)]
+        source_nodes += [walk[i] for i in range(self.window_size,self.walk_length) for j in range(1,self.window_size+1)]
+        context_nodes += [walk[i - j] for i in range(self.window_size,self.walk_length) for j in range(1,self.window_size+1)]
+        
+        length_of_source_nodes = len(source_nodes)
+        self.pure_sources += source_nodes
+        self.personas += [self.base_walker.str2idx[self.egonet_splitter.personality_map[source_node.item()]] for source_node in source_nodes]
+        self.sources += source_nodes * (self.negative_samples + 1)
+        self.contexts += context_nodes + list(np.random.choice(self.negative_samples_pool, self.negative_samples * length_of_source_nodes))
+        self.targets +=  [1.0] * length_of_source_nodes + [0.0] * (self.negative_samples * length_of_source_nodes)
 
     def transfer_batch(self):
         """
         Transfering the batch to GPU.
         """
-        self.node_f = self.model.node_embedding(torch.LongTensor(self.sources)).to(self.device)
-        self.feature_f = self.model.node_embedding(torch.LongTensor(self.contexts)).to(self.device)
+        self.node_f = self.model.node_embedding(torch.LongTensor(self.sources).to(self.device))
+        self.feature_f = self.model.node_embedding(torch.LongTensor(self.contexts).to(self.device))
         self.targets = torch.FloatTensor(self.targets).to(self.device)
-        self.source_f = self.model.node_embedding(torch.LongTensor(self.pure_sources)).to(self.device)
-        self.original_f = self.model.base_node_embedding(torch.LongTensor(self.personas)).to(self.device)
+        self.source_f = self.model.node_embedding(torch.LongTensor(self.pure_sources).to(self.device))
+        self.original_f = self.model.base_node_embedding(torch.LongTensor(self.personas).to(self.device))
 
     def optimize(self):
         """
@@ -262,34 +260,22 @@ class SplitterTrainer(object):
         self.model.train()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.optimizer.zero_grad()
-        logging.info("Learning the joint model.")
-        np.random.shuffle(self.persona_walker.walks)
-        self.steps = 0
-        self.losses = 0
-        self.walk_steps = trange(len(self.persona_walker.walks), desc="Loss")
-        for step in self.walk_steps:                
-            walk = self.persona_walker.walks[step]
-            for i in range(self.walk_length-self.window_size):
-                for j in range(1,self.window_size+1):
-                    source_node = walk[i]
-                    context_node = walk[i+j]
-                    self.create_batch(source_node, context_node)
-            for i in range(self.window_size,self.walk_length):
-                for j in range(1,self.window_size+1):
-                    source_node = walk[i]
-                    context_node = walk[i-j]
-                    self.create_batch(source_node, context_node)
-            
-            if (step + 1) % self.num_walks == 0:
-                self.transfer_batch()
-                self.losses = self.losses + self.optimize()
-                self.steps = self.steps + 1
-                average_loss = self.losses / self.steps
-                self.walk_steps.set_description("Splitter (Loss=%g)" % round(average_loss,4))
+        dataset = MyDataset(np.array(self.persona_walker.walks))
+        dataloader = DataLoader(dataset, batch_size=100, pin_memory=False, shuffle=True, num_workers=1)
+
+        data_iterator = tqdm(dataloader,
+							leave=True,
+							unit='batch',
+                            postfix={'lss':'% 6f' % 0.0})
+        for i, walks in enumerate(data_iterator):
+            for walk in walks:
+                self.create_batch_from_path(walk)
+            self.transfer_batch()
+            self.losses = self.optimize()
+            data_iterator.set_postfix(lss='%.6f' % self.losses)
+			
+			
                 
-            if (step + 1) % 1000 ==0:
-                self.steps = 0
-                self.losses = 0
 
     # save functions...
     def save_base_embedding(self, file_name):
@@ -305,8 +291,8 @@ class SplitterTrainer(object):
         logging.info("Saving the model.")
         nodes = [node for node in self.egonet_splitter.persona_graph.nodes()]
         nodes.sort()
-        nodes = torch.LongTensor(nodes)
-        self.embedding = self.model.node_embedding(nodes).detach().numpy()
+        nodes = torch.LongTensor(nodes).to(self.device)
+        self.embedding = self.model.node_embedding(nodes).cpu().detach().numpy()
         return_data = {str(node.item()): embedding for node, embedding in zip(nodes, self.embedding)}
         pd.to_pickle(return_data, file_name)
                 
@@ -323,3 +309,14 @@ class SplitterTrainer(object):
         """
         nx.write_edgelist(self.egonet_splitter.persona_graph, file_name)
 
+        
+class MyDataset(Dataset):
+    def __init__(self, data):
+        self.data = data
+        
+    def __getitem__(self, index):
+        x = self.data[index]
+        return x
+    
+    def __len__(self):
+        return len(self.data)
