@@ -21,46 +21,73 @@ argparse          1.1.0
 torch             0.4.1
 gensim            3.6.0
 ```
-### Datasets
-The code takes the **edge list** of the graph in a csv file. You can easily make the edgelist file with networkx function [nx.write_edgelist](https://networkx.github.io/documentation/networkx1.10/reference/generated/networkx.readwrite.edgelist.write_edgelist.html
+### Datasets - inputs
+The code takes the **edge list** of the graph in a csv file. You can easily make the edgelist file with networkx function [nx.write_edgelist](https://networkx.github.io/documentation/networkx1.10/reference/generated/networkx.readwrite.edgelist.write_edgelist.html)
 
 ### Outputs
 There are 4 outputs on Splitter
+
 1. Persona graph
-
-
-
-The embeddings are saved in the `input/` directory. Each embedding has a header and a column with the node IDs. Finally, the node embedding is sorted by the node ID column.
+  Persona graph is a result graph of ego-splitting. File format is edgelist, which is same to format of inputs
+  
+2. Persona mapping
+  Persona mapping is a dict that connnect orginal node and splitted persona nodes. Bascially, relation between two entities is 1 to M relations. File format is json.
+  
+3. Base embedding
+  Result embedding of Node2vec on orignal graph, it used as base embedding of splitter. File format is word2vec fomrat of gensim. You can read a result with gensim.models.Keyedvectors.load_word2vec_format()
+  
+4. Persona embedding
+  Result embedding of Spitter on persona graph. This embedding is final results of this resposiotry. File format is pickle(.pkl).
 
 ### Options
 The training of a Splitter embedding is handled by the `src/main.py` script which provides the following command line arguments.
 
 #### Input and output options
+   
 ```
-  --edge-path               STR    Edge list csv.           Default is `input/chameleon_edges.csv`.
-  --embedding-output-path   STR    Embedding output csv.    Default is `output/chameleon_embedding.csv`.
-  --persona-output-path     STR    Persona mapping JSON.    Default is `output/chameleon_personas.json`.
+  --input [INPUT]       Input graph path
+  --persona-graph [PERSONA_GRAPH]
+                        Persona network path.
+  --persona-mapping [PERSONA_MAPPING]
+                        Persona mapping path.
+  --emb_base [EMB_BASE]
+                        Base Embeddings path
+  --emb_persona [EMB_PERSONA]
+                        Persona Embeddings path
 ```
 #### Model options
 ```
-  --seed               INT     Random seed.                       Default is 42.
-  --number of walks    INT     Number of random walks per node.   Default is 10.
-  --window-size        INT     Skip-gram window size.             Default is 5.
-  --negative-samples   INT     Number of negative samples.        Default is 5.
-  --walk-length        INT     Random walk length.                Default is 40.
-  --lambd              FLOAT   Regularization parameter.          Default is 0.1
-  --dimensions         INT     Number of embedding dimensions.    Default is 128.
-  --workers            INT     Number of cores for pre-training.  Default is 4.   
-  --learning-rate      FLOAT   SGD learning rate.                 Default is 0.025
+    --dimensions DIMENSIONS
+                        Number of dimensions. Default is 128.
+  --walk-length WALK_LENGTH
+                        Length of walk per source. Default is 80.
+  --num-walks NUM_WALKS
+                        Number of walks per source. Default is 10.
+  --window-size WINDOW_SIZE
+                        Context size for optimization. Default is 10.
+  --base_iter BASE_ITER
+                        Number of epochs in base embedding
+  --p P                 Return hyperparameter for random-walker. Default is 1.
+  --q Q                 Inout hyperparameter for random-walker. Default is 1.
+  --learning-rate LEARNING_RATE
+                        Learning rate. Default is 0.01.
+  --lambd LAMBD         Regularization parameter. Default is 0.1.
+  --negative-samples NEGATIVE_SAMPLES
+                        Negative sample number. Default is 5.
+  --seed SEED           Random seed for PyTorch. Default is 42.
+  --workers WORKERS     Number of parallel workers. Default is 8.
+  --weighted            Boolean specifying (un)weighted. Default is
+                        unweighted.
+  --unweighted
+  --directed            Graph is (un)directed. Default is undirected.
+  --undirected
 ```
+
 ### Examples
 The following commands learn an embedding and save it with the persona map. Training a model on the default dataset.
 ```
 python src/main.py
 ```
-<p align="center">
-  <img width="500" src="splitter.gif">
-</p>
 
 Training a Splitter model with 32 dimensions.
 ```
